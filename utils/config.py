@@ -5,4 +5,4 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 # Data paths
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
-DATA_PATH = os.path.join(DATA_DIR, "data.csv")
+DATA_PATH = os.path.join(DATA_DIR, "NWMP_August2025_MPCB_0.csv")
