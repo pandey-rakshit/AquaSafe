@@ -64,11 +64,13 @@ def overview_step(result):
     summary.append("")  # Add a blank line for spacing
 
     # Summary Statistics
-    summary.append(OverviewConstants.SUMMARY_STATISTICS)
-    statistics = result[SUMMARIES["STATISTICS"]]
+    if SUMMARIES["STATISTICS"] in result:
+            
+        summary.append(OverviewConstants.SUMMARY_STATISTICS)
+        statistics = result[SUMMARIES["STATISTICS"]]
 
-    summary.append(
-        statistics.to_string()
-    )  # Use pandas' `to_string` for a clean table-like output
+        summary.append(
+            statistics.to_string()
+        )  # Use pandas' `to_string` for a clean table-like output
 
     return "\n".join(summary)
