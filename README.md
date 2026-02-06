@@ -1,546 +1,484 @@
-# AquaSafe – Water Quality ML Classification System
+# 🌊 AquaSafe: Water Quality Classification
 
-
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.3%2B-orange)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.28%2B-red)
-![License](https://img.shields.io/badge/License-MIT-green)
-
-An end-to-end machine learning solution for predicting water quality classifications based on physicochemical and biological parameters from Maharashtra's water monitoring program.
+A machine learning system to classify water quality based on physico-chemical and biological parameters, using data from the Maharashtra Pollution Control Board (MPCB) National Water Monitoring Programme.
 
 ---
 
 ## 📋 Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Dataset](#dataset)
-- [Project Structure](#project-structure)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Water Quality Classes](#water-quality-classes)
-- [Model Performance](#model-performance)
-- [Technical Details](#technical-details)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
+- [Problem Statement](#-problem-statement)
+- [Executive Summary](#-executive-summary)
+- [Dataset Overview](#-dataset-overview)
+- [Project Structure](#-project-structure)
+- [Installation](#-installation)
+- [Pipeline Workflow](#-pipeline-workflow)
+- [Feature Description](#-feature-description)
+- [Key Observations](#-key-observations)
+- [Model Performance](#-model-performance)
+- [Results](#-results)
+- [Known Limitations](#-known-limitations)
+- [Recommendations](#-recommendations)
+- [Usage](#-usage)
+- [License](#-license)
 
 ---
 
-## 🎯 Overview
+## 🎯 Problem Statement
 
-**AquaSafe** is an AI-powered water quality classification system designed to predict water use categories (A, B, C, E) based on physicochemical and biological test parameters. Built using data from the Maharashtra Pollution Control Board (MPCB), this system provides:
+Classify water bodies into regulatory quality classes based on their suitability for different uses:
 
-- **Real-time predictions** for water quality classification
-- **Interactive data exploration** through EDA dashboards
-- **Model comparison** and performance analysis
-- **Deployment-ready** Streamlit web application
-
-### Problem Statement
-
-How do physicochemical and biological parameters influence water quality classification and public health safety across monitoring stations in Maharashtra?
-
-### Solution
-
-A complete machine learning pipeline that:
-1. Cleans and preprocesses raw water quality data
-2. Engineers relevant features for classification
-3. Trains multiple ML models (Logistic Regression, Random Forest, XGBoost)
-4. Deploys an interactive web application for stakeholders
+| Class | Description | Use Case |
+|-------|-------------|----------|
+| **A** | Drinking water source without conventional treatment but after disinfection | Highest quality |
+| **B** | Outdoor bathing (Organized) | Recreational use |
+| **C** | Drinking water source with conventional treatment | Potable after treatment |
+| **E** | Irrigation, industrial cooling, controlled waste disposal | Agricultural/Industrial |
 
 ---
 
-## ✨ Features
+## 📊 Executive Summary
 
-### 🔮 Prediction System
-- Real-time water quality classification
-- Multi-model support (LogReg, Random Forest, XGBoost)
-- Confidence scores and probability distributions
-- Input validation against water quality standards
-
-### 📊 Data Analysis
-- Comprehensive exploratory data analysis
-- Interactive visualizations (Plotly)
-- Parameter distribution analysis
-- Correlation and relationship exploration
-
-### 📈 Model Insights
-- Performance comparison across models
-- Confusion matrices and classification reports
-- Feature importance analysis
-- Cross-validation results
-
-### 🚀 Deployment
-- Professional Streamlit web application
-- Modular, maintainable codebase
-- Responsive UI with custom styling
-- Easy deployment to Streamlit Cloud
+| Metric | Value |
+|--------|-------|
+| **Total Samples** | 175 (after cleaning) |
+| **Train / Test Split** | 140 / 35 (80/20) |
+| **Features** | 92 (after encoding) |
+| **Target Classes** | 4 (A, B, C, E) |
+| **Best Model** | Logistic Regression |
+| **Test Accuracy** | 94.29% |
+| **Test F1 (Macro)** | 90.83% |
+| **Prediction Confidence** | 91.28% (mean) |
 
 ---
 
-## 📊 Dataset
+## 📁 Dataset Overview
 
-**Source:** Maharashtra Pollution Control Board (MPCB)  
-**File:** `NWMP_August2025_MPCB_0.csv`  
-**Records:** 222 monitoring stations  
-**Features:** 54 parameters  
+**Source:** Maharashtra Pollution Control Board (MPCB) - National Water Monitoring Programme (August 2025)
 
-### Parameters Included
+### Class Distribution
 
-| Category | Parameters |
-|----------|------------|
-| **Chemical** | pH, BOD, COD, Dissolved Oxygen, Conductivity, TDS, Alkalinity, Hardness, Chlorides, Nitrates, etc. |
-| **Biological** | Total Coliform, Fecal Coliform, Fecal Streptococci |
-| **Physical** | Temperature, Turbidity, Color, Odor, Total Suspended Solids |
-| **Geographic** | Station Code, Location, District, River Basin |
+| Class | Train Samples | Test Samples | Percentage |
+|-------|---------------|--------------|------------|
+| A | 116 | 29 | 82.9% |
+| B | 4 | 1 | 2.9% |
+| C | 4 | 1 | 2.9% |
+| E | 16 | 4 | 11.4% |
 
-### Data Quality
-- ✅ Clean schemas with mixed data types
-- ⚠️ 15-30% missing values (handled via imputation)
-- ⚠️ BDL (Below Detection Limit) annotations preserved
-- ✅ Geographic coordinates standardized
+**Note:** Significant class imbalance present (A dominates at ~83%)
+
+### Feature Categories
+
+| Category | Count | Examples |
+|----------|-------|----------|
+| Chemical Parameters | 20+ | pH, conductivity, dissolved O₂, BOD, COD |
+| Biological Indicators | 5 | Fecal coliform, total coliform, fecal streptococci |
+| Physical Properties | 10+ | Temperature, turbidity, total suspended solids |
+| Contextual Features | 15+ | Water body type, human activities, flow, depth |
+| BDL Flags | 17 | Binary indicators for "Below Detection Limit" |
 
 ---
 
-## 📁 Project Structure
+## 📂 Project Structure
 
 ```
 AquaSafe/
-│
 ├── data/
-│   ├── raw/                          # Original dataset
+│   ├── raw/
 │   │   └── NWMP_August2025_MPCB_0.csv
-│   └── processed/                    # Cleaned and processed data
+│   └── processed/
 │       ├── csv/
-│       │   ├── cleaned_water_quality_data.csv
-│       │   └── nwmp_features_v1.csv
-│       └── parquet/
-│           └── nwmp_features_v1.parquet
+│       │   ├── cleaned_water_quality.csv
+│       │   ├── train.csv
+│       │   └── test.csv
+│       ├── parquet/
+│       │   ├── train.parquet
+│       │   └── test.parquet
+│       └── feature_registry.json
 │
-├── notebooks/                        # Jupyter notebooks (analysis pipeline)
-│   ├── 01_eda.ipynb                 # Exploratory Data Analysis
-│   ├── 02_data_cleaning.ipynb       # Data cleaning and preprocessing
-│   ├── 03_feature_engineering.ipynb # Feature encoding and engineering
-│   └── 04_model_training.ipynb      # Model training and evaluation
-│
-├── models/                           # Trained models and artifacts
+├── models/
 │   ├── logisticregression_pipeline.pkl
 │   ├── randomforest_pipeline.pkl
 │   ├── xgboost_pipeline.pkl
 │   ├── label_encoder.pkl
+│   ├── numeric_imputer.pkl
+│   ├── onehot_encoder.pkl
 │   ├── feature_names.pkl
 │   └── best_model_name.txt
 │
-├── app/                              # Streamlit web application
-│   ├── app.py                       # Main application entry point
-│   ├── config.py                    # Configuration and constants
-│   │
-│   ├── utils/                       # Utility functions
-│   │   ├── __init__.py
-│   │   ├── model_loader.py         # Model loading utilities
-│   │   ├── data_loader.py          # Data loading utilities
-│   │   └── visualizations.py       # Plotting functions
-│   │
-│   ├── pages/                       # Application pages
-│   │   ├── __init__.py
-│   │   ├── home.py                 # Home/landing page
-│   │   ├── predict.py              # Prediction interface
-│   │   ├── eda.py                  # EDA dashboard
-│   │   └── models.py               # Model comparison page
-│   │
-│   └── requirements.txt             # Streamlit dependencies
+├── notebooks/
+│   ├── 01_eda.ipynb
+│   ├── 02_data_cleaning.ipynb
+│   ├── 03_feature_engineering.ipynb
+│   ├── 04_model_training.ipynb
+│   └── 05_model_evaluation.ipynb
 │
-├── src/                              # Source code modules
-│   ├── data_preprocessing/
-│   │   ├── create_dataframe.py
-│   │   └── data_analysis.py
-│   │
-│   └── eda/
-│       ├── correlation/
-│       ├── skewness/
-│       └── outliers/
+├── src/
+│   └── data_preprocessing/
+│       └── create_dataframe.py
 │
-├── utils/                            # Project-wide utilities
-│   └── config.py                    # Global configuration
+├── utils/
+│   └── config.py
 │
-├── requirements.txt                  # Project dependencies
-├── README.md                        # This file
-├── .gitignore                       # Git ignore rules
-└── LICENSE                          # License file
+├── app/
+│   └── streamlit_app.py
+│
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## 🚀 Installation
-
-### Prerequisites
-
-- Python 3.8 or higher
-- pip package manager
-- Git (optional, for cloning)
-
-### Step 1: Clone the Repository
+## ⚙️ Installation
 
 ```bash
-git clone https://github.com/yourusername/AquaSafe.git
-cd AquaSafe
-```
+# Clone repository
+git clone https://github.com/yourusername/aquasafe.git
+cd aquasafe
 
-### Step 2: Create Virtual Environment (Recommended)
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate   # Windows
 
-```bash
-# Using venv
-python -m venv .venv
-
-# Activate virtual environment
-# On Windows:
-.venv\Scripts\activate
-
-# On macOS/Linux:
-source .venv/bin/activate
-```
-
-### Step 3: Install Dependencies
-
-```bash
-# Install all project dependencies
+# Install dependencies
 pip install -r requirements.txt
-
-# Install Streamlit app dependencies
-pip install -r app/requirements.txt
 ```
 
-### Main Dependencies
+### Requirements
 
-```txt
+```
 pandas>=2.0.0
 numpy>=1.24.0
 scikit-learn>=1.3.0
 xgboost>=2.0.0
 matplotlib>=3.7.0
 seaborn>=0.12.0
-streamlit>=1.28.0
-plotly>=5.17.0
 joblib>=1.3.0
+streamlit>=1.28.0
 ```
 
 ---
 
-## 💻 Usage
+## 🔄 Pipeline Workflow
 
-### Option 1: Run the Complete Pipeline
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           AquaSafe ML Pipeline                               │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-Execute notebooks in order:
+┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
+│   01_EDA.ipynb   │───▶│ 02_Cleaning.ipynb│───▶│ 03_Features.ipynb│
+│                  │    │                  │    │                  │
+│ • Distributions  │    │ • Parse BDL      │    │ • SPLIT FIRST    │
+│ • Missing values │    │ • Convert coords │    │ • Impute (train) │
+│ • Correlations   │    │ • Map target     │    │ • Encode (train) │
+│ • Leakage check  │    │ • Drop columns   │    │ • Export splits  │
+└──────────────────┘    │ • Export w/ NaN  │    └────────┬─────────┘
+                        └──────────────────┘             │
+                                                         ▼
+┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
+│05_Evaluation.ipynb│◀──│04_Training.ipynb │◀───│   train.csv      │
+│                  │    │                  │    │   test.csv       │
+│ • Confusion mat  │    │ • Load splits    │    └──────────────────┘
+│ • Per-class F1   │    │ • 5-Fold CV      │
+│ • Confidence     │    │ • Train models   │
+│ • Feature import │    │ • Save pipelines │
+└──────────────────┘    └──────────────────┘
+```
+
+### Data Leakage Prevention
+
+This pipeline follows industry best practices to prevent data leakage:
+
+| Step | Location | Fit On |
+|------|----------|--------|
+| Train-Test Split | Notebook 03 | N/A (before any transformation) |
+| Numeric Imputation (median) | Notebook 03 | Train only |
+| Categorical Imputation (mode) | Notebook 03 | Train only |
+| One-Hot Encoding | Notebook 03 | Train only |
+| Scaling (RobustScaler) | Notebook 04 | Train only (in pipeline) |
+
+---
+
+## 📊 Feature Description
+
+### Top 10 Most Important Features
+
+| Rank | Feature | Importance | Category |
+|------|---------|------------|----------|
+| 1 | approx_depth_Less than 50cm | 0.5715 | Physical |
+| 2 | human_activities_Others | 0.4596 | Contextual |
+| 3 | approx_depth_Greater than 100cm | 0.3763 | Physical |
+| 4 | phosphate | 0.3421 | Chemical |
+| 5 | approx_depth_50-100cm | 0.3044 | Physical |
+| 6 | conductivity | 0.3044 | Chemical |
+| 7 | turbidity_is_bdl | 0.3022 | BDL Flag |
+| 8 | flow | 0.3011 | Physical |
+| 9 | human_activities_Bathing,Washing,Fishing | 0.2908 | Contextual |
+| 10 | flouride | 0.2797 | Chemical |
+
+### Feature Categories
+
+**Chemical Parameters:**
+- pH, conductivity, dissolved oxygen, BOD, COD
+- Nitrates, phosphates, chlorides, sulphates
+- Heavy metals: boron, flouride, potassium, sodium
+
+**Biological Indicators:**
+- Fecal coliform, total coliform
+- Fecal streptococci
+- Total Kjeldahl nitrogen
+
+**Physical Properties:**
+- Temperature, turbidity, flow
+- Total suspended solids, total dissolved solids
+- Approximate depth, water body type
+
+**BDL (Below Detection Limit) Flags:**
+- 17 binary features indicating when measurements fall below lab detection thresholds
+- Preserved as they carry important signal about water purity
+
+---
+
+## 🔍 Key Observations
+
+### 1. Severe Class Imbalance
+- Class A dominates with ~83% of samples
+- Classes B and C have very few samples (1 each in test set)
+- Addressed using `class_weight='balanced'` in models
+
+### 2. Water Depth is Highly Predictive
+- All three depth categories appear in top 10 features
+- Shallow waters (<50cm) most strongly associated with quality class
+
+### 3. Human Activity Impact
+- Human activities significantly influence water quality classification
+- "Others" and "Bathing,Washing,Fishing" are strong predictors
+
+### 4. Chemical Indicators
+- Phosphate and conductivity are key chemical predictors
+- Fluoride levels contribute to classification decisions
+
+### 5. BDL Flags Carry Signal
+- `turbidity_is_bdl` in top 10 features
+- Below-detection-limit values indicate cleaner water
+
+---
+
+## 🏆 Model Performance
+
+### Model Comparison (Test Set)
+
+| Model | Accuracy | F1 (Macro) | Precision | Recall |
+|-------|----------|------------|-----------|--------|
+| **Logistic Regression** | **0.9429** | **0.9083** | **0.9839** | **0.8750** |
+| XGBoost | 0.9143 | 0.7583 | 0.8589 | 0.8125 |
+| Random Forest | 0.8571 | 0.4802 | 0.4632 | 0.5000 |
+
+**Winner: Logistic Regression** 🏆
+
+### Per-Class Performance (Best Model)
+
+| Class | Precision | Recall | F1-Score | Support | Status |
+|-------|-----------|--------|----------|---------|--------|
+| A | 0.935 | 1.000 | 0.967 | 29 | ✅ Excellent |
+| B | 1.000 | 1.000 | 1.000 | 1 | ✅ Excellent |
+| C | 1.000 | 1.000 | 1.000 | 1 | ✅ Excellent |
+| E | 1.000 | 0.500 | 0.667 | 4 | ⚠️ Fair |
+
+### Confusion Matrix
+
+```
+              Predicted
+              A    B    C    E
+Actual  A  [ 29    0    0    0 ]  100% recall
+        B  [  0    1    0    0 ]  100% recall
+        C  [  0    0    1    0 ]  100% recall
+        E  [  2    0    0    2 ]   50% recall  ← Weakness
+```
+
+### Misclassification Analysis
+
+- **Total misclassified:** 2 samples (5.7%)
+- **Pattern:** Both errors are E → A (Class E predicted as Class A)
+- **Confidence on errors:** Low (~0.55), indicating model uncertainty
+
+---
+
+## 📈 Results
+
+### Key Achievements
+
+1. **94.29% Test Accuracy** — Strong overall classification performance
+2. **90.83% Macro F1** — Balanced performance across imbalanced classes
+3. **91.28% Mean Confidence** — Model predictions are well-calibrated
+4. **Zero False Positives for B, C, E** — Perfect precision on minority classes
+5. **Interpretable Model** — Logistic Regression provides clear feature coefficients
+
+### Prediction Confidence
+
+| Metric | Value |
+|--------|-------|
+| Mean confidence (all predictions) | 91.28% |
+| Mean confidence (correct predictions) | 93.46% |
+| Mean confidence (incorrect predictions) | 55.42% |
+
+The model shows appropriate uncertainty on difficult cases.
+
+---
+
+## 🚨 Critical Safety Limitation
+
+> **⚠️ NOT RECOMMENDED FOR PRODUCTION USE WITHOUT ADDRESSING CLASS E RECALL**
+
+The model misclassifies **Class E (industrial/waste disposal) as Class A (drinking water)** — this is a **dangerous false negative** in a real-world scenario:
+
+| Actual | Predicted | Risk Level |
+|--------|-----------|------------|
+| E (Waste disposal) | A (Drinking water) | 🔴 **CRITICAL** — Could approve contaminated water for drinking |
+
+### Why This Happens
+
+This is **NOT classic overfitting or underfitting** — it's a **class imbalance + feature overlap problem**:
+
+| Issue | Evidence |
+|-------|----------|
+| **Severe Imbalance** | Class A = 83%, Class E = 11% — model biased toward majority |
+| **Feature Similarity** | E→A errors have ~55% confidence — model sees ambiguous signal |
+| **Insufficient E Samples** | Only 16 training samples for Class E |
+
+### Recommended Fixes Before Deployment
+
+1. **Collect 50+ more Class E samples** — current data insufficient for reliable boundary
+2. **Adjust classification threshold** — lower threshold for Class E (e.g., 0.3 instead of 0.5)
+3. **Cost-sensitive learning** — penalize E→A errors 10x more than other errors
+4. **Add a "flagged for manual review" category** — when confidence < 70%, don't auto-approve
+5. **Ensemble with rule-based checks** — if key pollutants exceed thresholds, override to E
+
+**Until fixed, this model should only be used for preliminary screening, not final classification decisions.**
+
+---
+
+## ⚠️ Known Limitations
+
+### 1. Small Dataset
+- Only 175 samples after cleaning
+- Test set has only 35 samples
+- Classes B and C have minimal representation
+
+### 2. Class E Recall Issue
+- Model struggles to identify Class E (50% recall)
+- 2 out of 4 Class E samples misclassified as Class A
+- Likely due to similar characteristics between degraded Class A and Class E water
+
+### 3. Geographic Scope
+- Data only from Maharashtra, India
+- May not generalize to other regions
+
+### 4. Temporal Limitations
+- Single month snapshot (August 2025)
+- Seasonal variations not captured
+
+---
+
+## 💡 Recommendations
+
+### Immediate Improvements
+
+1. **Collect More Class E Samples**
+   - Current recall is only 50%
+   - More training examples would help distinguish E from A
+
+2. **Hyperparameter Tuning**
+   - Use GridSearchCV or Optuna for optimization
+   - Focus on regularization strength for Logistic Regression
+
+3. **Threshold Adjustment**
+   - Current model may be too conservative for Class E
+   - Consider class-specific probability thresholds
+
+### Future Enhancements
+
+1. **Ensemble Methods**
+   - Combine Logistic Regression with XGBoost via stacking
+   - May improve Class E recall
+
+2. **SHAP Analysis**
+   - Add SHAP values for better interpretability
+   - Understand per-prediction feature contributions
+
+3. **Temporal Features**
+   - Include seasonal indicators when more data available
+   - Water quality varies significantly by season
+
+4. **Geographic Expansion**
+   - Collect data from other states/regions
+   - Build regional models or add location features
+
+---
+
+## 🚀 Usage
+
+### Running the Notebooks
 
 ```bash
-# 1. Exploratory Data Analysis
+# Execute notebooks in order
 jupyter notebook notebooks/01_eda.ipynb
-
-# 2. Data Cleaning
 jupyter notebook notebooks/02_data_cleaning.ipynb
-
-# 3. Feature Engineering
 jupyter notebook notebooks/03_feature_engineering.ipynb
-
-# 4. Model Training
 jupyter notebook notebooks/04_model_training.ipynb
+jupyter notebook notebooks/05_model_evaluation.ipynb
 ```
 
-### Option 2: Run the Streamlit App
-
-```bash
-# From project root
-streamlit run app/app.py
-
-# App will open at http://localhost:8501
-```
-
-### Option 3: Use Trained Models Directly
+### Making Predictions
 
 ```python
 import joblib
 import pandas as pd
 
-# Load model
-model = joblib.load('models/randomforest_pipeline.pkl')
+# Load artifacts
+model = joblib.load('models/logisticregression_pipeline.pkl')
 label_encoder = joblib.load('models/label_encoder.pkl')
+feature_names = joblib.load('models/feature_names.pkl')
 
-# Make prediction
-X_new = pd.DataFrame({...})  # Your input data
-prediction_encoded = model.predict(X_new)
-prediction = label_encoder.inverse_transform(prediction_encoded)
+# Prepare your data (must have same features as training)
+# X_new = pd.DataFrame(...)  # Your new data
 
-print(f"Water Quality Class: {prediction[0]}")
+# Predict
+predictions = model.predict(X_new)
+predicted_classes = label_encoder.inverse_transform(predictions)
+probabilities = model.predict_proba(X_new)
+
+print(f"Predicted class: {predicted_classes[0]}")
+print(f"Confidence: {probabilities.max():.2%}")
 ```
 
----
+### Running Streamlit App
 
-## 💧 Water Quality Classes
-
-| Class | Description | Use | Water Quality Standards |
-|-------|-------------|-----|------------------------|
-| **A** | Drinking water source (post-disinfection) | Potable without conventional treatment | pH: 6.5-8.5, DO: ≥6 mg/L, BOD: ≤2 mg/L |
-| **B** | Outdoor bathing (Organized) | Recreational activities | pH: 6.5-8.5, DO: ≥5 mg/L, BOD: ≤3 mg/L |
-| **C** | Drinking water source | Potable after conventional treatment | DO: ≥4 mg/L, BOD: ≤3 mg/L |
-| **E** | Irrigation, industrial cooling | Non-potable uses | pH: 5.5-9.0, more lenient parameters |
-
-### Classification Criteria
-
-Based on **Bureau of Indian Standards (BIS)** and **WHO guidelines** for:
-- Physicochemical parameters (pH, dissolved oxygen, BOD, COD)
-- Biological indicators (coliform bacteria)
-- Physical characteristics (turbidity, color, odor)
-
----
-
-## 📈 Model Performance
-
-### Test Set Results
-
-| Model | Accuracy | F1 (Macro) | Precision | Recall |
-|-------|----------|------------|-----------|--------|
-| **Logistic Regression** | 0.9485 | 0.7122 | 0.7810 | 0.6750 |
-| **Random Forest** | 0.9543 | 0.7456 | 0.7923 | 0.7102 |
-| **XGBoost** | 0.9571 | 0.7589 | 0.8045 | 0.7234 |
-
-### Best Model: **XGBoost**
-- **Test Accuracy:** 95.71%
-- **F1 Score (Macro):** 75.89%
-- **Cross-Validation:** Stratified 3-fold CV
-
-### Key Insights
-- ✅ High overall accuracy across all models
-- ⚠️ Class imbalance (82% Class A) addressed via `class_weight='balanced'`
-- ✅ XGBoost performs best on minority classes (B, C)
-- ✅ Feature importance: DO, pH, BOD, Total Coliform are top predictors
-
----
-
-## 🔧 Technical Details
-
-### Machine Learning Pipeline
-
-```
-Raw Data → Cleaning → Feature Engineering → Model Training → Deployment
-```
-
-#### 1. Data Cleaning (`02_data_cleaning.ipynb`)
-- **BDL Handling:** Extracted numeric values, preserved flags
-- **Missing Values:** Median (numeric), mode (categorical)
-- **Type Conversion:** DMS coordinates → decimal degrees
-- **Target Mapping:** Verbose labels → compact codes (A/B/C/E)
-- **Feature Curation:** Removed 18 leakage/metadata columns
-
-#### 2. Feature Engineering (`03_feature_engineering.ipynb`)
-- **Encoding:** One-hot encoding for categorical features
-- **Validation:** Input/output contract checks
-- **Registry:** JSON manifest for deployment
-- **Output:** 179 features ready for modeling
-
-#### 3. Model Training (`04_model_training.ipynb`)
-- **Split:** 80/20 train-test (stratified)
-- **Cross-Validation:** 3-fold stratified CV
-- **Scaling:** RobustScaler (handles outliers)
-- **Class Balance:** `class_weight='balanced'`
-- **Metrics:** Accuracy, F1 (macro), Precision, Recall
-
-### Algorithms Used
-
-1. **Logistic Regression**
-   - Baseline linear model
-   - L2 regularization, max_iter=2000
-   - Fast inference, interpretable
-
-2. **Random Forest**
-   - Ensemble of 300 decision trees
-   - Handles non-linearity, robust to outliers
-   - Feature importance available
-
-3. **XGBoost**
-   - Gradient boosting (best performer)
-   - max_depth=4, learning_rate=0.1
-   - Handles class imbalance well
-
-### Model Selection Criteria
-- **Primary:** F1 Score (Macro) - balanced performance across classes
-- **Secondary:** Confusion matrix analysis
-- **Deployment:** XGBoost (best overall performance)
-
----
-
-## 🎨 Streamlit Application
-
-### Features
-
-#### 🏠 Home Page
-- Project overview and introduction
-- Water quality class descriptions
-- Dataset information and statistics
-- Quick start guide
-
-#### 🔮 Predict Page
-- Interactive input form for water parameters
-- Real-time classification predictions
-- Confidence scores and probability distribution
-- Input validation against BIS standards
-- Actionable recommendations
-
-#### 📊 EDA Dashboard
-- Target variable distribution
-- Parameter distributions by category
-- Correlation analysis
-- Class-wise parameter comparison
-- Interactive filters and selections
-
-#### 📈 Model Comparison
-- Performance metrics comparison
-- Confusion matrices (all models)
-- Per-class performance analysis
-- Feature importance visualization
-- Model details and documentation
-
-### Technologies Used
-- **Frontend:** Streamlit
-- **Visualizations:** Plotly, Matplotlib, Seaborn
-- **Backend:** Scikit-learn, XGBoost
-- **Data Processing:** Pandas, NumPy
-
----
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-#### 1. Models Not Found
 ```bash
-# Error: Model files not found
-# Solution: Run model training notebook
-jupyter notebook notebooks/04_model_training.ipynb
+streamlit run app/streamlit_app.py
 ```
-
-#### 2. Data Files Missing
-```bash
-# Error: Data files not found
-# Solution: Ensure data files exist in data/processed/
-# Run cleaning and feature engineering notebooks
-```
-
-#### 3. Import Errors
-```bash
-# Error: Module not found
-# Solution: Install all dependencies
-pip install -r requirements.txt
-pip install -r app/requirements.txt
-```
-
-#### 4. Streamlit Won't Start
-```bash
-# Error: Streamlit command not found
-# Solution: Ensure virtual environment is activated
-source .venv/bin/activate  # macOS/Linux
-.venv\Scripts\activate     # Windows
-
-# Then reinstall streamlit
-pip install streamlit
-```
-
-### Getting Help
-- Check notebook outputs for detailed error messages
-- Review config.py for correct file paths
-- Ensure all notebooks are run in sequence
-- Open an issue on GitHub for persistent problems
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Development Guidelines
-- Follow PEP 8 style guide
-- Add docstrings to all functions
-- Update README.md for new features
-- Test thoroughly before submitting PR
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is for educational and research purposes. Data sourced from Maharashtra Pollution Control Board under open government data initiatives.
 
 ---
 
-## 🙏 Acknowledgments
+## 👥 Contributors
 
-- **Data Source:** Maharashtra Pollution Control Board (MPCB)
-- **Standards:** Bureau of Indian Standards (BIS), WHO Water Quality Guidelines
-- **Frameworks:** Scikit-learn, XGBoost, Streamlit
-- **Community:** Open-source ML and data science community
+- **Project:** AquaSafe Water Quality Classification
+- **Data Source:** MPCB National Water Monitoring Programme
+- **Framework:** Scikit-learn, XGBoost, Pandas
 
 ---
 
 ## 📧 Contact
 
-**Project Maintainer:** Rakshit Pandey
-
-**Email:** inbox.rakshitpandey@gmail.com  
-**GitHub:** [@pandey-rakshit](https://github.com/pandey-rakshit)  
-**LinkedIn:** [pandey-rakshit](https://linkedin.com/in/pandey-rakshit)
+For questions or feedback, please open an issue on GitHub.
 
 ---
 
-## 🔮 Future Enhancements
-
-- [ ] Deploy to Streamlit Cloud / Heroku
-- [ ] Add SHAP values for model explainability
-- [ ] Implement ensemble model (voting classifier)
-- [ ] Add time-series analysis for temporal patterns
-- [ ] Create API endpoint for programmatic access
-- [ ] Add batch prediction functionality
-- [ ] Implement A/B testing for model comparison
-- [ ] Add user authentication and data persistence
-- [ ] Create mobile-responsive design
-- [ ] Add multilingual support (Hindi, Marathi)
-
----
-
-## 📊 Project Timeline
-
-| Phase | Duration | Deliverables |
-|-------|----------|--------------|
-| **EDA** | Days 1-2 | 10+ visualizations, data quality report |
-| **Cleaning** | Days 3-4 | Cleaned dataset, preprocessing pipeline |
-| **Modeling** | Days 3-4 | 3 trained models, evaluation metrics |
-| **Deployment** | Days 5-6 | Streamlit app, documentation |
-| **Presentation** | Day 7 | Slides, demo video, technical report |
-
----
-
-## 📚 References
-
-1. Bureau of Indian Standards (BIS). (2012). *Drinking Water Specifications* (IS 10500:2012)
-2. World Health Organization. (2017). *Guidelines for Drinking-water Quality*
-3. Maharashtra Pollution Control Board. (2025). *National Water Monitoring Programme Dataset*
-4. Scikit-learn Documentation: https://scikit-learn.org/
-5. XGBoost Documentation: https://xgboost.readthedocs.io/
-6. Streamlit Documentation: https://docs.streamlit.io/
-
----
-
-## 🌟 Star History
-
-If you find this project helpful, please consider giving it a ⭐ on GitHub!
-
-[![Star History Chart](https://api.star-history.com/svg?repos=yourusername/AquaSafe&type=Date)](https://star-history.com/#yourusername/AquaSafe&Date)
-
----
-
-**Built with ❤️ for cleaner water and safer communities**
-
-*Last Updated: January 2026*
+*Last Updated: February 2026*
